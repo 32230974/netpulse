@@ -1,36 +1,159 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🌐 NetPulse — Smart ISP Management System
 
-## Getting Started
+> AI-powered Internet Service Provider management platform built with Next.js 16, TypeScript, Tailwind CSS 4, PostgreSQL, Prisma 7, and OpenAI.
 
-First, run the development server:
+---
 
+## ✨ Features
+
+### 🔐 Authentication & Authorization
+- NextAuth v5 with Credentials provider
+- JWT-based sessions with role-based access
+- Three roles: **Admin**, **Employee**, **Customer**
+- Route protection via Edge-compatible middleware
+
+### 👥 Customer Management
+- Full CRUD operations (add, edit, delete)
+- Searchable & filterable customer table with pagination
+- Detailed customer profiles with subscription history
+- Customer risk score analytics
+
+### 📦 Subscription System
+- Three plans: Basic ($29), Standard ($49), Premium ($99)
+- Auto-renewal tracking
+- Subscription lifecycle management
+
+### 💰 Billing & Invoicing
+- Invoice generation and management
+- Mark paid/unpaid with payment record tracking
+- Revenue dashboard with trend charts
+- Tax calculation
+
+### 🎫 Support Ticket System
+- Create tickets with priority levels (Low → Urgent)
+- Conversation threading
+- Status workflow: Open → In Progress → Closed
+- AI-powered response suggestions
+
+### 🤖 AI Intelligence
+- **AI Chatbot** — Context-aware assistant with customer data
+- **Churn Prediction** — Risk scoring (0-100) with contributing factors
+- **Business Insights** — Revenue forecasts, growth opportunities
+- **Auto-Suggestions** — AI generates ticket response templates
+
+### 📊 Dashboard
+- Real-time KPI cards
+- Revenue trend charts (Recharts)
+- Churn risk distribution
+- Plan analytics
+
+---
+
+## 🛠 Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| Framework | Next.js 16 (App Router, Turbopack) |
+| Language | TypeScript |
+| Styling | Tailwind CSS 4 |
+| Database | PostgreSQL |
+| ORM | Prisma 7 |
+| Auth | NextAuth v5 (Beta) |
+| AI | OpenAI API (GPT-4o-mini) |
+| Charts | Recharts |
+| Icons | Lucide React |
+| Validation | Zod |
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+- Node.js 18+
+- PostgreSQL database
+
+### 1. Clone & Install
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone <repo-url>
+cd netpulse
+npm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 2. Configure Environment
+```bash
+cp .env.example .env
+# Edit .env with your database URL and secrets
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 3. Setup Database
+```bash
+npx prisma db push     # Create tables
+npx prisma db seed     # Populate demo data
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### 4. Run Development Server
+```bash
+npm run dev
+# Open http://localhost:3000
+```
 
-## Learn More
+### 5. Build for Production
+```bash
+npm run build
+npm start
+```
 
-To learn more about Next.js, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 🔑 Demo Credentials
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+| Role | Email | Password |
+|------|-------|----------|
+| Admin | admin@netpulse.com | password123 |
+| Employee | employee@netpulse.com | password123 |
+| Customer | customer@netpulse.com | password123 |
 
-## Deploy on Vercel
+---
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 📁 Project Structure
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```
+netpulse/
+├── prisma/
+│   ├── schema.prisma         # Database schema (11 models)
+│   └── seed.ts               # Demo data seeder
+├── src/
+│   ├── app/
+│   │   ├── (auth)/           # Login & Register pages
+│   │   ├── (dashboard)/      # Protected dashboard pages
+│   │   │   ├── dashboard/    # Admin KPI dashboard
+│   │   │   ├── customers/    # Customer CRUD + profiles
+│   │   │   ├── billing/      # Invoice management
+│   │   │   ├── tickets/      # Support ticket system
+│   │   │   ├── ai-insights/  # AI analytics
+│   │   │   ├── subscriptions/# Plan management
+│   │   │   └── settings/     # User preferences
+│   │   ├── api/              # REST API routes
+│   │   │   ├── ai/           # Chat, Churn, Insights, Suggest
+│   │   │   ├── auth/         # NextAuth + Register
+│   │   │   ├── customers/    # Customer CRUD
+│   │   │   ├── invoices/     # Invoice management
+│   │   │   ├── subscriptions/# Subscription API
+│   │   │   ├── tickets/      # Ticket + Messages API
+│   │   │   └── dashboard/    # Stats aggregation
+│   │   └── page.tsx          # Landing page
+│   ├── components/           # Reusable components
+│   ├── lib/                  # Utilities & services
+│   │   ├── ai/openai.ts      # OpenAI client + fallbacks
+│   │   ├── prisma.ts         # Database client
+│   │   └── utils.ts          # Formatting helpers
+│   ├── auth.ts               # NextAuth configuration
+│   └── middleware.ts         # Route protection
+└── package.json
+```
+
+---
+
+## 📄 License
+
+MIT License — Built as a graduation project.

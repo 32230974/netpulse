@@ -1,0 +1,198 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  password      String
+  role          String      @default("CUSTOMER")
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  customer      Customer?
+  tickets       Ticket[]        @relation("TicketCreator")
+  ticketMessages TicketMessage[]
+  chatMessages  ChatMessage[]
+  notifications Notification[]
+
+  @@index([email])
+  @@index([role])
+}
+
+model Customer {
+  id              String          @id @default(cuid())
+  userId          String          @unique
+  user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  firstName       String
+  lastName        String
+  phone           String
+  address         String
+  city            String
+  status          String  @default("ACTIVE")
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  subscriptions   Subscription[]
+  invoices        Invoice[]
+  riskScores      RiskScore[]
+
+  @@index([status])
+  @@index([userId])
+}
+
+model Plan {
+  id              String          @id @default(cuid())
+  name            String          @unique
+  description     String
+  price           Float
+  speed           String
+  features        String
+  isActive        Boolean         @default(true)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  subscriptions   Subscription[]
+
+  @@index([isActive])
+}
+
+model Subscription {
+  id                  String             @id @default(cuid())
+  customerId          String
+  customer            Customer           @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  planId              String
+  plan                Plan               @relation(fields: [planId], references: [id])
+  status              String @default("PENDING")
+  startDate           DateTime
+  endDate             DateTime
+  autoRenew           Boolean            @default(true)
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+
+  @@index([customerId])
+  @@index([planId])
+  @@index([status])
+  @@index([endDate])
+}
+
+model Invoice {
+  id              String        @id @default(cuid())
+  customerId      String
+  customer        Customer      @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  amount          Float
+  tax             Float         @default(0)
+  total           Float
+  status          String @default("UNPAID")
+  dueDate         DateTime
+  description     String
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  payments        Payment[]
+
+  @@index([customerId])
+  @@index([status])
+  @@index([dueDate])
+}
+
+model Payment {
+  id              String    @id @default(cuid())
+  invoiceId       String
+  invoice         Invoice   @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  amount          Float
+  method          String    @default("card")
+  transactionId   String?
+  paidAt          DateTime  @default(now())
+  createdAt       DateTime  @default(now())
+
+  @@index([invoiceId])
+}
+
+model Ticket {
+  id              String        @id @default(cuid())
+  subject         String
+  description     String
+  status          String  @default("OPEN")
+  priority        String @default("MEDIUM")
+  creatorId       String
+  creator         User          @relation("TicketCreator", fields: [creatorId], references: [id], onDelete: Cascade)
+  assignedTo      String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  messages        TicketMessage[]
+
+  @@index([creatorId])
+  @@index([status])
+  @@index([priority])
+}
+
+model TicketMessage {
+  id              String    @id @default(cuid())
+  ticketId        String
+  ticket          Ticket    @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  senderId        String
+  sender          User      @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  content         String
+  isAiGenerated   Boolean   @default(false)
+  createdAt       DateTime  @default(now())
+
+  @@index([ticketId])
+}
+
+model ChatMessage {
+  id              String    @id @default(cuid())
+  userId          String
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role            String    // "user" or "assistant"
+  content         String
+  createdAt       DateTime  @default(now())
+
+  @@index([userId])
+}
+
+model AIInsight {
+  id              String    @id @default(cuid())
+  type            String    // "revenue", "churn", "growth", "recommendation"
+  title           String
+  content         String
+  data            String?   // JSON string for chart data
+  createdAt       DateTime  @default(now())
+
+  @@index([type])
+}
+
+model RiskScore {
+  id              String    @id @default(cuid())
+  customerId      String
+  customer        Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  score           Int       // 0-100
+  level           String
+  factors         String
+  calculatedAt    DateTime  @default(now())
+
+  @@index([customerId])
+  @@index([level])
+}
+
+model Notification {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title       String
+  message     String
+  type        String   @default("info") // "info", "warning", "success", "error"
+  isRead      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+  @@index([isRead])
+}
