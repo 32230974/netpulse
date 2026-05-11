@@ -43,8 +43,12 @@ export async function GET() {
       where: { customerId: customer.id, status: 'UNPAID' }
     })
 
+    const activeSub = customer.subscriptions[0] || null
+
     return NextResponse.json({
-      activeSubscription: customer.subscriptions[0] || null,
+      activeSubscription: activeSub,
+      dataCapGb: activeSub?.dataCapGb ?? 0,
+      dataUsedGb: activeSub?.dataUsedGb ?? 0,
       unpaidInvoices,
       totalTickets: tickets.length,
       recentInvoices: customer.invoices,

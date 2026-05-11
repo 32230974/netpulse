@@ -48,20 +48,21 @@ export default function CustomerProfilePage({ params }: { params: Promise<{ id: 
   const [loading, setLoading] = useState(true)
   const [showSubModal, setShowSubModal] = useState(false)
 
-  useEffect(() => {
-    const fetchCustomer = async () => {
-      try {
-        const res = await fetch(`/api/customers/${id}`)
-        if (res.ok) {
-          const data = await res.json()
-          setCustomer(data)
-        }
-      } catch (error) {
-        console.error('Failed to fetch customer:', error)
-      } finally {
-        setLoading(false)
+  const fetchCustomer = async () => {
+    try {
+      const res = await fetch(`/api/customers/${id}`)
+      if (res.ok) {
+        const data = await res.json()
+        setCustomer(data)
       }
+    } catch (error) {
+      console.error('Failed to fetch customer:', error)
+    } finally {
+      setLoading(false)
     }
+  }
+
+  useEffect(() => {
     fetchCustomer()
   }, [id])
 

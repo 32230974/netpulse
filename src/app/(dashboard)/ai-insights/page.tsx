@@ -38,6 +38,8 @@ export default function AIInsightsPage() {
   const [generating, setGenerating] = useState(false)
   const [generatingChurn, setGeneratingChurn] = useState(false)
   const [runningReminders, setRunningReminders] = useState(false)
+  const [sendingUsage50, setSendingUsage50] = useState(false)
+  const [sendingUsage100, setSendingUsage100] = useState(false)
 
   const fetchData = async () => {
     try {
@@ -95,15 +97,37 @@ export default function AIInsightsPage() {
   const runReminders = async () => {
     setRunningReminders(true)
     try {
-      const res = await fetch('/api/ai/reminders', { method: 'POST' })
+      const res = await fetch('/api/notifications/renewal', { method: 'POST' })
       if (res.ok) {
         const data = await res.json()
-        alert(`Successfully sent ${data.sent} AI renewal reminders!`)
+        alert(`Successfully sent ${data.sent} renewal notifications!`)
       }
     } catch (error) {
       console.error('Failed to run reminders:', error)
     } finally {
       setRunningReminders(false)
+    }
+  }
+
+  const runUsageAlerts = async (threshold: 50 | 100) => {
+    if (threshold === 50) setSendingUsage50(true)
+    else setSendingUsage100(true)
+
+    try {
+      const res = await fetch('/api/notifications/usage', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ threshold }),
+      })
+      if (res.ok) {
+        const data = await res.json()
+        alert(`Successfully sent ${data.sent} ${threshold}% data usage notifications!`)
+      }
+    } catch (error) {
+      console.error('Failed to send usage alerts:', error)
+    } finally {
+      if (threshold === 50) setSendingUsage50(false)
+      else setSendingUsage100(false)
     }
   }
 
@@ -146,6 +170,22 @@ export default function AIInsightsPage() {
         </div>
         <div className="flex items-center gap-3">
           <button
+            onClick={() => runUsageAlerts(50)}
+            disabled={sendingUsage50}
+            className="btn-secondary"
+          >
+            {sendingUsage50 ? <Loader2 className="w-4 h-4 animate-spin" /> : <Bell className="w-4 h-4" />}
+            Send 50% Alerts
+          </button>
+          <button
+            onClick={() => runUsageAlerts(100)}
+            disabled={sendingUsage100}
+            className="btn-secondary"
+          >
+            {sendingUsage100 ? <Loader2 className="w-4 h-4 animate-spin" /> : <Bell className="w-4 h-4" />}
+            Send 100% Alerts
+          </button>
+          <button
             onClick={runChurnAnalysis}
             disabled={generatingChurn}
             className="btn-secondary"
@@ -164,10 +204,11 @@ export default function AIInsightsPage() {
           <button
             onClick={runReminders}
             disabled={runningReminders}
-            className="w-10 h-10 rounded-lg bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 flex items-center justify-center transition-all"
-            title="Run AI Renewal Reminders"
+            className="btn-secondary"
+            title="Send renewal notifications"
           >
             {runningReminders ? <Loader2 className="w-4 h-4 animate-spin" /> : <Bell className="w-4 h-4" />}
+            Send Renewal
           </button>
         </div>
       </div>

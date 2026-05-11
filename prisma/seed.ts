@@ -16,6 +16,8 @@ async function main() {
   await prisma.payment.deleteMany()
   await prisma.invoice.deleteMany()
   await prisma.subscription.deleteMany()
+  await prisma.bundle.deleteMany()
+  await prisma.billingInformation.deleteMany()
   await prisma.customer.deleteMany()
   await prisma.plan.deleteMany()
   await prisma.user.deleteMany()
@@ -69,6 +71,29 @@ async function main() {
   })
 
   console.log('✅ Plans created')
+
+  // Create bundles
+  const familyBundle = await prisma.bundle.create({
+    data: {
+      name: 'Family Bundle',
+      description: 'Perfect for families with multiple connections',
+      discount: 15,
+      totalPrice: 109.99,
+      plans: JSON.stringify([basicPlan.id, standardPlan.id]),
+    },
+  })
+
+  const businessBundle = await prisma.bundle.create({
+    data: {
+      name: 'Business Bundle',
+      description: 'Professional setup for small businesses',
+      discount: 20,
+      totalPrice: 179.99,
+      plans: JSON.stringify([standardPlan.id, premiumPlan.id]),
+    },
+  })
+
+  console.log('✅ Bundles created')
 
   // Create customers with their users
   const customerData = [
@@ -125,48 +150,117 @@ async function main() {
 
   // Assign subscriptions
   const plans = [basicPlan, standardPlan, premiumPlan]
+  const bundles = [familyBundle, businessBundle]
   const now = new Date()
 
   for (let i = 0; i < customers.length; i++) {
     const plan = plans[i % 3]
     const startDate = new Date(now.getTime() - Math.random() * 180 * 24 * 60 * 60 * 1000) // Random start within 6 months
-    const endDate = new Date(startDate.getTime() + 30 * 24 * 60 * 60 * 1000)
+    const renewalDays = i % 4 === 0 ? 5 : 30
+    const endDate = customers[i].status === 'INACTIVE'
+      ? new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000)
+      : new Date(now.getTime() + renewalDays * 24 * 60 * 60 * 1000)
 
-    const status = customers[i].status === 'INACTIVE' ? 'EXPIRED' : (endDate < now ? 'EXPIRED' : 'ACTIVE')
+    const status = endDate < now ? 'EXPIRED' : 'ACTIVE'
+
+    // 30% of customers get bundled subscriptions
+    const bundleId = Math.random() > 0.7 ? bundles[i % bundles.length].id : undefined
+    const dataCapGb = plan.name === 'Basic' ? 500 : plan.name === 'Standard' ? 1000 : 2000
+    const dataUsedGb = i % 5 === 0
+      ? dataCapGb
+      : i % 3 === 0
+        ? Math.round(dataCapGb * 0.55 * 10) / 10
+        : Math.round(dataCapGb * (0.15 + Math.random() * 0.75) * 10) / 10
 
     await prisma.subscription.create({
       data: {
         customerId: customers[i].id,
         planId: plan.id,
+        bundleId,
         status: status as 'ACTIVE' | 'EXPIRED',
         startDate,
-        endDate: new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000), // Set to future for active customers
+        endDate,
         autoRenew: Math.random() > 0.2,
+        dataCapGb,
+        dataUsedGb: Math.min(dataUsedGb, dataCapGb),
       },
     })
   }
 
   console.log('✅ Subscriptions created')
 
-  // Create invoices and payments
+  // Create billing information for each customer
+  const paymentMethods = ['card', 'bank_transfer', 'check']
+  const states = ['Texas', 'California', 'New York', 'Florida', 'Illinois']
+  
+  for (const customer of customers) {
+    const paymentMethod = paymentMethods[Math.floor(Math.random() * paymentMethods.length)]
+    const state = states[Math.floor(Math.random() * states.length)]
+    
+    const billingData: any = {
+      customerId: customer.id,
+      billingAddress: customer.address,
+      billingCity: customer.city,
+      billingState: state,
+      billingZipCode: `${Math.floor(Math.random() * 90000) + 10000}`,
+      billingCountry: 'United States',
+      paymentMethod,
+      isDefault: true,
+    }
+    
+    if (paymentMethod === 'card') {
+      billingData.cardHolderName = `${customer.firstName} ${customer.lastName}`
+      billingData.cardLastFour = `${Math.floor(Math.random() * 9000) + 1000}`
+      const month = Math.floor(Math.random() * 12) + 1
+      const year = 25 + Math.floor(Math.random() * 5)
+      billingData.cardExpiry = `${month.toString().padStart(2, '0')}/${year}`
+    } else if (paymentMethod === 'bank_transfer') {
+      billingData.bankAccountHolderName = `${customer.firstName} ${customer.lastName}`
+      billingData.bankAccountLastFour = `${Math.floor(Math.random() * 9000) + 1000}`
+      billingData.bankRoutingNumber = `${Math.floor(Math.random() * 900000000) + 100000000}`
+    }
+    
+    // 20% chance of having a tax ID (business accounts)
+    if (Math.random() > 0.8) {
+      billingData.taxId = `${Math.floor(Math.random() * 90000000) + 10000000}`
+      billingData.businessName = `${customer.lastName} Enterprises`
+    }
+    
+    await prisma.billingInformation.create({ data: billingData })
+  }
+
+  console.log('✅ Billing information created')
   const invoiceStatuses = ['PAID', 'PAID', 'PAID', 'UNPAID', 'OVERDUE'] as const
 
   for (const customer of customers) {
+    // Get customer's subscription to check if they have a bundle
+    const subscription = await prisma.subscription.findFirst({
+      where: { customerId: customer.id },
+      include: { bundle: true },
+    })
+
     for (let m = 0; m < 3; m++) {
       const plan = plans[customers.indexOf(customer) % 3]
       const dueDate = new Date(now.getTime() - m * 30 * 24 * 60 * 60 * 1000)
       const status = invoiceStatuses[Math.floor(Math.random() * invoiceStatuses.length)]
-      const tax = plan.price * 0.08
+      
+      // If customer has bundle subscription, use bundle price; otherwise use plan price
+      const amount = subscription?.bundle ? subscription.bundle.totalPrice : plan.price
+      const tax = amount * 0.08
+      const description = subscription?.bundle 
+        ? `Monthly Internet Service - ${subscription.bundle.name}`
+        : `Monthly Internet Service - ${plan.name} Plan`
 
       const invoice = await prisma.invoice.create({
         data: {
           customerId: customer.id,
-          amount: plan.price,
+          bundleId: subscription?.bundleId,
+          amount,
           tax,
-          total: plan.price + tax,
+          total: amount + tax,
           status,
           dueDate,
-          description: `Monthly Internet Service - ${plan.name} Plan`,
+          description,
         },
       })
 
@@ -174,7 +268,7 @@ async function main() {
         await prisma.payment.create({
           data: {
             invoiceId: invoice.id,
-            amount: plan.price + tax,
+            amount: amount + tax,
             method: ['card', 'bank_transfer', 'paypal'][Math.floor(Math.random() * 3)],
             paidAt: new Date(dueDate.getTime() - Math.random() * 5 * 24 * 60 * 60 * 1000),
           },

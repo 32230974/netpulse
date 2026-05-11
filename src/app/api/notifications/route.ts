@@ -21,7 +21,7 @@ export async function GET() {
       notifications = await prisma.$queryRawUnsafe(
         `SELECT * FROM Notification WHERE userId = ? ORDER BY createdAt DESC LIMIT 20`,
         session.user.id
-      )
+      ) as any[]
       // Normalize raw results (boolean handling for SQLite)
       notifications = (notifications as any).map((n: any) => ({
         ...n,

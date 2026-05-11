@@ -13,6 +13,7 @@ interface Subscription {
   endDate: string
   autoRenew: boolean
   plan: { id: string; name: string; price: number; speed: string; features: string[] }
+  bundle?: { id: string; name: string; totalPrice: number; discount: number } | null
   customer: { firstName: string; lastName: string }
 }
 
@@ -27,7 +28,9 @@ export default function SubscriptionsPage() {
     if (session) {
       fetch('/api/subscriptions')
         .then(res => res.json())
-        .then(setSubscriptions)
+        .then(data => {
+          setSubscriptions(Array.isArray(data) ? data : [])
+        })
         .catch(console.error)
         .finally(() => setLoading(false))
     }
@@ -55,7 +58,7 @@ export default function SubscriptionsPage() {
         <h2 className="text-lg font-semibold text-white mb-4">Available Plans</h2>
         <div className="grid md:grid-cols-3 gap-4">
           {plans.map((plan) => {
-            const isCurrent = userRole === 'CUSTOMER' && subscriptions.some(s => s.plan?.name === plan.name)
+            const isCurrent = userRole === 'CUSTOMER' && Array.isArray(subscriptions) && subscriptions.some(s => s.plan?.name === plan.name)
             return (
               <div key={plan.name} className={`glass-card p-6 relative ${plan.popular ? 'border-purple-500/30' : ''} ${isCurrent ? 'ring-2 ring-emerald-500/50 border-emerald-500/30' : ''}`}>
                 {plan.popular && (
@@ -111,12 +114,13 @@ export default function SubscriptionsPage() {
             <CreditCard className="w-12 h-12 text-slate-600 mx-auto mb-3" />
             <p className="text-slate-400">No subscriptions found</p>
           </div>
-        ) : (
+        ) : (Array.isArray(subscriptions) ? (
           <table className="data-table">
             <thead>
               <tr>
                 <th>Customer</th>
                 <th>Plan</th>
+                <th>Bundle</th>
                 <th>Price</th>
                 <th>Start Date</th>
                 <th>End Date</th>
@@ -129,7 +133,16 @@ export default function SubscriptionsPage() {
                 <tr key={sub.id}>
                   <td className="text-sm text-white">{sub.customer?.firstName} {sub.customer?.lastName}</td>
                   <td className="text-sm text-white font-medium">{sub.plan?.name}</td>
-                  <td className="text-sm text-white">{formatCurrency(sub.plan?.price || 0)}/mo</td>
+                  <td className="text-sm text-white">
+                    {sub.bundle ? (
+                      <span className="px-2 py-1 bg-blue-500/20 text-blue-300 rounded text-xs font-medium">
+                        {sub.bundle.name}
+                      </span>
+                    ) : (
+                      <span className="text-slate-500 text-xs">—</span>
+                    )}
+                  </td>
+                  <td className="text-sm text-white">{formatCurrency(sub.bundle?.totalPrice || sub.plan?.price || 0)}/mo</td>
                   <td className="text-sm text-slate-400">{formatDate(sub.startDate)}</td>
                   <td className="text-sm text-slate-400">{formatDate(sub.endDate)}</td>
                   <td>
@@ -142,7 +155,11 @@ export default function SubscriptionsPage() {
               ))}
             </tbody>
           </table>
-        )}
+        ) : (
+          <div className="p-12 text-center">
+            <p className="text-slate-400">Error loading subscriptions</p>
+          </div>
+        ))}
       </div>
     </div>
   )

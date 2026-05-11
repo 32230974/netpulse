@@ -8,7 +8,7 @@ export async function middleware(req: NextRequest) {
   // Get JWT token (Edge-compatible, no DB required)
   const token = await getToken({ 
     req, 
-    secret: process.env.NEXTAUTH_SECRET 
+    secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET
   })
 
   const isLoggedIn = !!token

@@ -22,7 +22,7 @@ export async function generateAIResponse(
   history: Array<{ role: string; content: string }> = []
 ): Promise<string> {
   const openai = getOpenAI()
-  
+
   if (!openai) {
     // Add a small artificial delay to make the fallback feel like real work is being done
     await new Promise(resolve => setTimeout(resolve, 800))
@@ -55,7 +55,7 @@ export async function generateAIResponse(
 
 function generateFallbackResponse(message: string, systemPrompt: string = ''): string {
   const lower = message.toLowerCase()
-  
+
   // Try to extract some data from the message if it's a business prompt
   const extractValue = (pattern: RegExp) => {
     const match = message.match(pattern)
@@ -129,15 +129,15 @@ With ${activeCustomers || '0'} active customers, there is significant room for h
   if (lower.includes('subscription') || lower.includes('plan')) {
     return 'Your subscription information can be viewed in the Subscriptions section of your dashboard. We offer three plans:\n\n• **Basic** — $29/mo, 50 Mbps download, 10 Mbps upload\n• **Standard** — $49/mo, 100 Mbps download, 25 Mbps upload (Most Popular)\n• **Premium** — $99/mo, 500 Mbps download, 100 Mbps upload\n\nWould you like to know more about upgrading your plan?'
   }
-  
+
   if (lower.includes('bill') || lower.includes('payment') || lower.includes('invoice')) {
     return 'You can view your billing history and manage payments in the Billing section. If you have an outstanding invoice, you can pay it directly through your dashboard.\n\nFor billing disputes or questions about specific charges, please create a support ticket and our billing team will assist you within 24 hours.'
   }
-  
+
   if (lower.includes('slow') || lower.includes('speed') || lower.includes('internet') || lower.includes('connection')) {
     return 'I understand you may be experiencing connection issues. Here are some troubleshooting steps:\n\n1. 🔄 Restart your router/modem (unplug for 30 seconds)\n2. 🔌 Check all cable connections\n3. 📊 Run a speed test at speedtest.net\n4. 🗑️ Clear your browser cache\n5. 📍 Move closer to your router if on WiFi\n\nIf the issue persists, please create a support ticket and our technical team will investigate.'
   }
-  
+
   if (lower.includes('expire') || lower.includes('renew') || lower.includes('cancel')) {
     return 'Your subscription details including expiry date and renewal status can be found in your Subscriptions page. Auto-renewal is enabled by default.\n\nTo manage your subscription:\n• View renewal date → Subscriptions page\n• Change plans → Click "Switch Plan" on the Subscriptions page\n• Cancel → Please create a support ticket\n\nNeed help with something specific?'
   }
@@ -149,6 +149,6 @@ With ${activeCustomers || '0'} active customers, there is significant room for h
   if (lower.includes('thank') || lower.includes('thanks')) {
     return 'You\'re welcome! 😊 I\'m glad I could help. If you have any other questions, feel free to ask anytime. Have a great day!'
   }
-  
+
   return 'Thank you for reaching out! I\'m your NetPulse AI assistant. I can help with subscription inquiries, billing questions, internet troubleshooting, and general account support.\n\nCould you please provide more details about what you need help with? You can also create a support ticket from the Tickets page for more complex issues.'
 }

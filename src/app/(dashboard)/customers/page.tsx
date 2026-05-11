@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import {
   Users, Plus, Search, Filter,
-  Phone, MapPin, Edit2, Trash2, Eye, X, ChevronLeft, ChevronRight
+  Phone, MapPin, Edit2, Trash2, Eye, X, ChevronLeft, ChevronRight,
+  AlertTriangle, Shield, Loader2
 } from 'lucide-react'
 import { getStatusColor, formatDate } from '@/lib/utils'
 
@@ -30,6 +31,11 @@ export default function CustomersPage() {
   const [showAddModal, setShowAddModal] = useState(false)
   const [editCustomer, setEditCustomer] = useState<Customer | null>(null)
   const [page, setPage] = useState(1)
+  const [showHighRiskModal, setShowHighRiskModal] = useState(false)
+  const [highRiskCustomers, setHighRiskCustomers] = useState<any[]>([])
+  const [loadingHighRisk, setLoadingHighRisk] = useState(false)
+  const [suspending, setSuspending] = useState<string | null>(null)
+  const [suspendingAll, setSuspendingAll] = useState(false)
 
   const fetchCustomers = async () => {
     try {
@@ -67,6 +73,60 @@ export default function CustomersPage() {
     }
   }
 
+  const fetchHighRisk = async () => {
+    setLoadingHighRisk(true)
+    try {
+      const res = await fetch('/api/customers/high-risk')
+      if (res.ok) {
+        const data = await res.json()
+        setHighRiskCustomers(data.customers || [])
+      }
+    } catch (error) {
+      console.error('Failed to fetch high-risk customers:', error)
+    } finally {
+      setLoadingHighRisk(false)
+    }
+  }
+
+  const suspendCustomer = async (customerId: string) => {
+    setSuspending(customerId)
+    try {
+      const res = await fetch('/api/customers/high-risk', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ customerId }),
+      })
+      if (res.ok) {
+        setHighRiskCustomers(prev => prev.filter(c => c.id !== customerId))
+        fetchCustomers()
+      }
+    } catch (error) {
+      console.error('Failed to suspend customer:', error)
+    } finally {
+      setSuspending(null)
+    }
+  }
+
+  const suspendAllHighRisk = async () => {
+    if (!confirm(`Are you sure you want to suspend all ${highRiskCustomers.length} high-risk customers?`)) return
+    setSuspendingAll(true)
+    try {
+      const res = await fetch('/api/customers/high-risk', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+      })
+      if (res.ok) {
+        setHighRiskCustomers([])
+        fetchCustomers()
+      }
+    } catch (error) {
+      console.error('Failed to suspend all:', error)
+    } finally {
+      setSuspendingAll(false)
+    }
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -75,9 +135,17 @@ export default function CustomersPage() {
           <h1 className="text-2xl font-bold text-white">Customers</h1>
           <p className="text-sm text-slate-400 mt-1">{customers.length} total customers</p>
         </div>
-        <button onClick={() => setShowAddModal(true)} className="btn-primary">
-          <Plus className="w-4 h-4" /> Add Customer
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => { setShowHighRiskModal(true); fetchHighRisk() }}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm font-medium hover:bg-red-500/20 transition-all"
+          >
+            <AlertTriangle className="w-4 h-4" /> Remove High-Risk
+          </button>
+          <button onClick={() => setShowAddModal(true)} className="btn-primary">
+            <Plus className="w-4 h-4" /> Add Customer
+          </button>
+        </div>
       </div>
 
       {/* Filters */}
@@ -102,6 +170,7 @@ export default function CustomersPage() {
             <option value="ALL">All Status</option>
             <option value="ACTIVE">Active</option>
             <option value="INACTIVE">Inactive</option>
+            <option value="SUSPENDED">Suspended</option>
           </select>
         </div>
       </div>
@@ -243,6 +312,95 @@ export default function CustomersPage() {
           onClose={() => { setShowAddModal(false); setEditCustomer(null) }}
           onSave={() => { fetchCustomers(); setShowAddModal(false); setEditCustomer(null) }}
         />
+      )}
+
+      {/* High-Risk Customers Modal */}
+      {showHighRiskModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="glass-card w-full max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
+            <div className="flex items-center justify-between p-6 border-b border-white/5">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-red-500/15 flex items-center justify-center">
+                  <AlertTriangle className="w-5 h-5 text-red-400" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold text-white">High-Risk Customers</h2>
+                  <p className="text-xs text-slate-500">Customers with churn risk above 87%</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                {highRiskCustomers.length > 0 && (
+                  <button
+                    onClick={suspendAllHighRisk}
+                    disabled={suspendingAll}
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-semibold hover:bg-red-500/20 transition-all disabled:opacity-50"
+                  >
+                    {suspendingAll ? (
+                      <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Suspending...</>
+                    ) : (
+                      <><AlertTriangle className="w-3.5 h-3.5" /> Remove All ({highRiskCustomers.length})</>
+                    )}
+                  </button>
+                )}
+                <button onClick={() => setShowHighRiskModal(false)} className="text-slate-500 hover:text-white transition-colors">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+
+            <div className="overflow-y-auto flex-1 p-6">
+              {loadingHighRisk ? (
+                <div className="text-center py-12">
+                  <Loader2 className="w-8 h-8 text-blue-500 animate-spin mx-auto mb-3" />
+                  <p className="text-sm text-slate-500">Scanning for high-risk customers...</p>
+                </div>
+              ) : highRiskCustomers.length === 0 ? (
+                <div className="text-center py-12">
+                  <Shield className="w-12 h-12 text-emerald-500/30 mx-auto mb-3" />
+                  <h3 className="text-lg font-semibold text-white mb-1">All Clear!</h3>
+                  <p className="text-sm text-slate-500">No customers with a risk score above 87%.</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {highRiskCustomers.map((c) => (
+                    <div key={c.id} className="flex items-center justify-between p-4 rounded-xl bg-red-500/5 border border-red-500/10 hover:bg-red-500/10 transition-all">
+                      <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 rounded-full bg-red-500/15 flex items-center justify-center text-xs font-bold text-red-400">
+                          {c.firstName[0]}{c.lastName[0]}
+                        </div>
+                        <div>
+                          <p className="text-sm font-semibold text-white">{c.firstName} {c.lastName}</p>
+                          <p className="text-xs text-slate-500">{c.email}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <div className="text-right">
+                          <p className="text-lg font-bold text-red-400">{c.riskScore}%</p>
+                          <p className="text-[10px] uppercase font-bold text-red-500/60">Risk Score</p>
+                        </div>
+                        <div className="text-right hidden sm:block">
+                          <p className="text-xs text-slate-400">{c.plan}</p>
+                          <p className="text-[10px] text-slate-600">Current Plan</p>
+                        </div>
+                        <button
+                          onClick={() => suspendCustomer(c.id)}
+                          disabled={suspending === c.id}
+                          className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-semibold hover:bg-red-500/20 transition-all disabled:opacity-50"
+                        >
+                          {suspending === c.id ? (
+                            <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Removing...</>
+                          ) : (
+                            <><Trash2 className="w-3.5 h-3.5" /> Remove</>
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )

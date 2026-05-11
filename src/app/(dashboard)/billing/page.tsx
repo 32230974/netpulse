@@ -5,7 +5,7 @@ import { useSession } from 'next-auth/react'
 import {
   Receipt, DollarSign, Plus, Search,
   TrendingUp, Clock, X,
-  AlertCircle, Download
+  AlertCircle, Download, CreditCard, Lock, Loader2, CheckCircle2
 } from 'lucide-react'
 import { formatCurrency, formatDate, getStatusColor } from '@/lib/utils'
 import {
@@ -22,6 +22,7 @@ interface Invoice {
   dueDate: string
   description: string
   createdAt: string
+  bundleId?: string | null
   customer: {
     firstName: string
     lastName: string
@@ -53,6 +54,12 @@ export default function BillingPage() {
   const [statusFilter, setStatusFilter] = useState('ALL')
   const [search, setSearch] = useState('')
   const [showCreateModal, setShowCreateModal] = useState(false)
+  const [showPayModal, setShowPayModal] = useState(false)
+  const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null)
+  const [payProcessing, setPayProcessing] = useState(false)
+  const [paySuccess, setPaySuccess] = useState(false)
+  const [payError, setPayError] = useState<string | null>(null)
+  const [payForm, setPayForm] = useState({ name: '', cardNumber: '', expiry: '', cvc: '' })
 
   const fetchInvoices = async () => {
     try {
@@ -248,7 +255,16 @@ export default function BillingPage() {
                         <p className="text-xs text-slate-500">{invoice.customer?.user?.email}</p>
                       </td>
                     )}
-                    <td className="text-sm text-slate-400">{invoice.description}</td>
+                    <td className="text-sm">
+                      <div className="flex items-center gap-2">
+                        <span className="text-slate-400">{invoice.description}</span>
+                        {invoice.bundleId && (
+                          <span className="px-2 py-0.5 bg-blue-500/20 text-blue-300 rounded text-xs font-medium whitespace-nowrap">
+                            Bundle
+                          </span>
+                        )}
+                      </div>
+                    </td>
                     <td className="text-sm text-white font-medium">{formatCurrency(invoice.total)}</td>
                     <td className="text-sm text-slate-400">{formatDate(invoice.dueDate)}</td>
                     <td>
@@ -267,9 +283,24 @@ export default function BillingPage() {
                           {invoice.status === 'PAID' ? 'Mark Unpaid' : 'Mark Paid'}
                         </button>
                       ) : (
-                        <button className="flex items-center gap-1.5 text-xs font-medium text-blue-400 hover:text-blue-300 transition-colors">
-                          <Download className="w-3.5 h-3.5" /> PDF
-                        </button>
+                        <div className="flex items-center gap-2">
+                          {invoice.status !== 'PAID' && (
+                            <button
+                              onClick={() => {
+                                setSelectedInvoice(invoice)
+                                setPaySuccess(false)
+                                setPayError(null)
+                                setShowPayModal(true)
+                              }}
+                              className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 border border-emerald-500/20 transition-all hover:scale-105 active:scale-95"
+                            >
+                              <CreditCard className="w-3.5 h-3.5" /> Pay Now
+                            </button>
+                          )}
+                          <button className="flex items-center gap-1.5 text-xs font-medium text-blue-400 hover:text-blue-300 transition-colors">
+                            <Download className="w-3.5 h-3.5" /> PDF
+                          </button>
+                        </div>
                       )}
                     </td>
                   </tr>
@@ -281,6 +312,168 @@ export default function BillingPage() {
       </div>
 
       {/* Create Invoice Modal */}
+      {/* Invoice Payment Modal */}
+      {showPayModal && selectedInvoice && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="glass-card w-full max-w-md overflow-hidden relative">
+            {paySuccess ? (
+              <div className="p-8 text-center space-y-4 py-12">
+                <div className="w-16 h-16 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <CheckCircle2 className="w-8 h-8 text-emerald-400" />
+                </div>
+                <h2 className="text-2xl font-bold text-white">Payment Successful!</h2>
+                <p className="text-slate-400">
+                  Your payment of ${selectedInvoice.total.toFixed(2)} has been processed.
+                </p>
+                <p className="text-xs text-emerald-400">Your churn risk score has been updated.</p>
+                <div className="pt-4">
+                  <div className="w-full h-1 bg-white/5 rounded-full overflow-hidden">
+                    <div className="h-full bg-emerald-500 animate-[progress_3s_linear]" />
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <form
+                onSubmit={async (e) => {
+                  e.preventDefault()
+                  setPayProcessing(true)
+                  setPayError(null)
+
+                  // Simulate payment gateway
+                  await new Promise(resolve => setTimeout(resolve, 2000))
+
+                  try {
+                    const res = await fetch('/api/invoices/pay', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ invoiceId: selectedInvoice.id }),
+                    })
+                    const result = await res.json()
+
+                    if (!res.ok) {
+                      setPayError(result.error || 'Payment failed')
+                      setPayProcessing(false)
+                      return
+                    }
+
+                    setPayProcessing(false)
+                    setPaySuccess(true)
+                    fetchInvoices()
+
+                    setTimeout(() => {
+                      setShowPayModal(false)
+                      setPaySuccess(false)
+                      setSelectedInvoice(null)
+                    }, 3000)
+                  } catch {
+                    setPayError('Network error. Please try again.')
+                    setPayProcessing(false)
+                  }
+                }}
+                className="p-6 space-y-6"
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                    <CreditCard className="w-5 h-5 text-blue-400" /> Pay Invoice
+                  </h2>
+                  <button
+                    type="button"
+                    onClick={() => setShowPayModal(false)}
+                    className="text-slate-500 hover:text-white transition-colors"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <div className="p-4 rounded-xl bg-blue-500/5 border border-blue-500/10">
+                  <div className="flex justify-between items-center mb-1">
+                    <span className="text-xs text-slate-400">Invoice</span>
+                    <span className="text-xs font-bold text-white">#{selectedInvoice.id.slice(-6).toUpperCase()}</span>
+                  </div>
+                  <div className="flex justify-between items-center mb-1">
+                    <span className="text-xs text-slate-400">Description</span>
+                    <span className="text-xs text-white">{selectedInvoice.description}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs text-slate-400">Total Amount</span>
+                    <span className="text-sm font-bold text-blue-400">${selectedInvoice.total.toFixed(2)}</span>
+                  </div>
+                </div>
+
+                {payError && (
+                  <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-xs text-red-400">
+                    {payError}
+                  </div>
+                )}
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-[10px] uppercase font-bold text-slate-500 mb-1.5 ml-1">Cardholder Name</label>
+                    <input
+                      type="text" required
+                      className="input-field bg-white/5 border-white/10"
+                      placeholder="JOHN DOE"
+                      value={payForm.name}
+                      onChange={e => setPayForm({...payForm, name: e.target.value})}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] uppercase font-bold text-slate-500 mb-1.5 ml-1">Card Number</label>
+                    <div className="relative">
+                      <CreditCard className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                      <input
+                        type="text" required maxLength={19}
+                        className="input-field bg-white/5 border-white/10 pl-10"
+                        placeholder="0000 0000 0000 0000"
+                        value={payForm.cardNumber}
+                        onChange={e => setPayForm({...payForm, cardNumber: e.target.value})}
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-[10px] uppercase font-bold text-slate-500 mb-1.5 ml-1">Expiry</label>
+                      <input
+                        type="text" required maxLength={5}
+                        className="input-field bg-white/5 border-white/10"
+                        placeholder="MM/YY"
+                        value={payForm.expiry}
+                        onChange={e => setPayForm({...payForm, expiry: e.target.value})}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] uppercase font-bold text-slate-500 mb-1.5 ml-1">CVC</label>
+                      <input
+                        type="password" required maxLength={4}
+                        className="input-field bg-white/5 border-white/10"
+                        placeholder="***"
+                        value={payForm.cvc}
+                        onChange={e => setPayForm({...payForm, cvc: e.target.value})}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={payProcessing}
+                  className="w-full btn-primary py-3 flex items-center justify-center gap-2 mt-4"
+                >
+                  {payProcessing ? (
+                    <><Loader2 className="w-4 h-4 animate-spin" /> Processing...</>
+                  ) : (
+                    <><Lock className="w-4 h-4" /> Pay ${selectedInvoice.total.toFixed(2)}</>
+                  )}
+                </button>
+                <p className="text-[10px] text-center text-slate-500 flex items-center justify-center gap-1">
+                  <Lock className="w-2.5 h-2.5" /> SECURE ENCRYPTED TRANSACTION
+                </p>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
+
       {showCreateModal && (
         <CreateInvoiceModal
           onClose={() => setShowCreateModal(false)}

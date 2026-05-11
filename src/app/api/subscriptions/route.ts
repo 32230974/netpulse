@@ -19,6 +19,7 @@ export async function GET() {
       where,
       include: {
         plan: true,
+        bundle: true,
         customer: { select: { firstName: true, lastName: true } },
       },
       orderBy: { createdAt: 'desc' },
@@ -37,12 +38,15 @@ export async function POST(req: Request) {
       data: {
         customerId: body.customerId,
         planId: body.planId,
+        bundleId: body.bundleId || undefined,
         status: 'ACTIVE',
         startDate: new Date(),
         endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
         autoRenew: body.autoRenew ?? true,
+        dataCapGb: body.dataCapGb ?? 0,
+        dataUsedGb: body.dataUsedGb ?? 0,
       },
-      include: { plan: true },
+      include: { plan: true, bundle: true },
     })
     return NextResponse.json(subscription, { status: 201 })
   } catch (error) {
