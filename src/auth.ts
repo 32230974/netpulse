@@ -74,7 +74,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     },
   },
   events: {
-    async createUser({ user }) {
+    async createUser(message) {
+      const { user } = message;
       if (!user.id) return;
       try {
         const dbUser = await prisma.user.findUnique({
