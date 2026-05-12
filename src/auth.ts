@@ -89,9 +89,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             await prisma.customer.create({
               data: {
                 userId: user.id,
-                email: user.email!,
+                firstName: user.name?.split(" ")[0] || "New",
+                lastName: user.name?.split(" ")[1] || "Customer",
+                phone: "TBD",
+                address: "TBD",
+                city: "TBD",
                 status: "ACTIVE",
-                balance: 0,
               },
             })
           }
