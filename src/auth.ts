@@ -74,8 +74,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     },
   },
   events: {
-    async createUser(message) {
-      const { user } = message;
+    async createUser({ user }) {
       if (!user.id) return;
       try {
         const dbUser = await prisma.user.findUnique({
@@ -88,13 +87,19 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           })
 
           if (!existingCustomer) {
+            const nameParts = (user.name || "New Customer").split(" ");
+            const firstName = nameParts[0];
+            const lastName = nameParts.length > 1 ? nameParts.slice(1).join(" ") : "Customer";
+
             await prisma.customer.create({
               data: {
                 userId: user.id as string,
-                name: user.name || "New Customer",
-                email: user.email!,
+                firstName: firstName,
+                lastName: lastName,
+                phone: "000-000-0000",
+                address: "Pending Info",
+                city: "Pending Info",
                 status: "ACTIVE",
-                balance: 0,
               },
             })
           }
