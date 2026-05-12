@@ -75,26 +75,25 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   },
   events: {
     async createUser({ user }) {
+      if (!user.id) return;
       try {
         const dbUser = await prisma.user.findUnique({
-          where: { id: user.id },
+          where: { id: user.id as string },
         })
 
         if (dbUser && dbUser.role === "CUSTOMER") {
           const existingCustomer = await prisma.customer.findUnique({
-            where: { userId: user.id },
+            where: { userId: user.id as string },
           })
 
           if (!existingCustomer) {
             await prisma.customer.create({
               data: {
-                userId: user.id,
-                firstName: user.name?.split(" ")[0] || "New",
-                lastName: user.name?.split(" ")[1] || "Customer",
-                phone: "TBD",
-                address: "TBD",
-                city: "TBD",
+                userId: user.id as string,
+                name: user.name || "New Customer",
+                email: user.email!,
                 status: "ACTIVE",
+                balance: 0,
               },
             })
           }
