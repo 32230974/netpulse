@@ -7,12 +7,14 @@ import Facebook from "next-auth/providers/facebook"
 import Credentials from "next-auth/providers/credentials"
 import bcrypt from "bcryptjs"
 
+import type { Provider } from "next-auth/providers"
+
 const googleClientId = process.env.AUTH_GOOGLE_ID || process.env.GOOGLE_CLIENT_ID
 const googleClientSecret = process.env.AUTH_GOOGLE_SECRET || process.env.GOOGLE_CLIENT_SECRET
 const facebookClientId = process.env.AUTH_FACEBOOK_ID || process.env.FACEBOOK_CLIENT_ID
 const facebookClientSecret = process.env.AUTH_FACEBOOK_SECRET || process.env.FACEBOOK_CLIENT_SECRET
 
-const providers = [
+const providers: Provider[] = [
   Credentials({
     name: "credentials",
     credentials: {
@@ -96,7 +98,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     },
   },
   events: {
-    async createUser({ user }) {
+    async createUser(message) {
+      const { user } = message;
       if (!user.id) return;
       try {
         const dbUser = await prisma.user.findUnique({
