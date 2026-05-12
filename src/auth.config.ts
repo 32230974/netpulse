@@ -1,22 +1,24 @@
 import type { NextAuthConfig } from "next-auth"
-import Credentials from "next-auth/providers/credentials"
-import Google from "next-auth/providers/google"
 
-export default {
-  providers: [
-    Google({
-      clientId: process.env.AUTH_GOOGLE_ID,
-      clientSecret: process.env.AUTH_GOOGLE_SECRET,
-    }),
-    Credentials({
-      credentials: {
-        email: { label: "Email", type: "email" },
-        password: { label: "Password", type: "password" },
-      },
-      async authorize() {
-        // This will be overridden in the main auth.ts
-        return null
-      },
-    }),
-  ],
+export const authConfig = {
+  pages: {
+    signIn: "/login",
+  },
+  callbacks: {
+    authorized({ auth, request: { nextUrl } }) {
+      const isLoggedIn = !!auth?.user
+      const isPublicPage = ['/', '/login', '/register'].includes(nextUrl.pathname)
+
+      if (!isPublicPage && !isLoggedIn) {
+        return false // Redirect to login
+      }
+      
+      if (isPublicPage && isLoggedIn) {
+        return Response.redirect(new URL('/dashboard', nextUrl))
+      }
+
+      return true
+    },
+  },
+  providers: [], // Add providers in auth.ts
 } satisfies NextAuthConfig

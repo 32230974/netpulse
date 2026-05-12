@@ -1,23 +1,24 @@
 import NextAuth from "next-auth"
 import { PrismaAdapter } from "@auth/prisma-adapter"
 import prisma from "@/lib/prisma"
-import authConfig from "./auth.config"
+import { authConfig } from "./auth.config"
+import Credentials from "next-auth/providers/credentials"
+import Google from "next-auth/providers/google"
 import { z } from "zod"
 import bcrypt from "bcryptjs"
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
+  ...authConfig,
   adapter: PrismaAdapter(prisma),
   session: { strategy: "jwt" },
   secret: process.env.AUTH_SECRET,
   trustHost: true,
-  pages: {
-    signIn: "/login",
-  },
-  ...authConfig,
   providers: [
-    ...authConfig.providers,
-    {
-      ...authConfig.providers.find(p => p.id === 'credentials'),
+    Google({
+      clientId: process.env.AUTH_GOOGLE_ID,
+      clientSecret: process.env.AUTH_GOOGLE_SECRET,
+    }),
+    Credentials({
       async authorize(credentials) {
         const parsed = z
           .object({
@@ -39,7 +40,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         const isValid = await bcrypt.compare(password, user.password)
         if (!isValid) return null
 
-        // Check if the customer account has been suspended due to high risk
         if (user.role === 'CUSTOMER') {
           const customer = await prisma.customer.findUnique({
             where: { userId: user.id },
@@ -57,9 +57,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           image: user.image,
         }
       },
-    }
+    }),
   ],
   callbacks: {
+    ...authConfig.callbacks,
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id as string
