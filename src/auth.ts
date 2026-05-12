@@ -3,8 +3,65 @@ import { PrismaAdapter } from "@auth/prisma-adapter"
 import prisma from "@/lib/prisma"
 import { authConfig } from "./auth.config"
 import Google from "next-auth/providers/google"
+import Facebook from "next-auth/providers/facebook"
 import Credentials from "next-auth/providers/credentials"
 import bcrypt from "bcryptjs"
+
+const googleClientId = process.env.AUTH_GOOGLE_ID || process.env.GOOGLE_CLIENT_ID
+const googleClientSecret = process.env.AUTH_GOOGLE_SECRET || process.env.GOOGLE_CLIENT_SECRET
+const facebookClientId = process.env.AUTH_FACEBOOK_ID || process.env.FACEBOOK_CLIENT_ID
+const facebookClientSecret = process.env.AUTH_FACEBOOK_SECRET || process.env.FACEBOOK_CLIENT_SECRET
+
+const providers = [
+  Credentials({
+    name: "credentials",
+    credentials: {
+      email: { label: "Email", type: "email" },
+      password: { label: "Password", type: "password" },
+    },
+    async authorize(credentials) {
+      if (!credentials?.email || !credentials?.password) return null
+
+      const user = await prisma.user.findUnique({
+        where: { email: credentials.email as string },
+      })
+
+      if (!user || !user.password) return null
+
+      const isValid = await bcrypt.compare(
+        credentials.password as string,
+        user.password
+      )
+
+      if (!isValid) return null
+
+      return {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+      }
+    },
+  }),
+]
+
+if (googleClientId && googleClientSecret) {
+  providers.unshift(
+    Google({
+      clientId: googleClientId,
+      clientSecret: googleClientSecret,
+    })
+  )
+}
+
+if (facebookClientId && facebookClientSecret) {
+  providers.push(
+    Facebook({
+      clientId: facebookClientId,
+      clientSecret: facebookClientSecret,
+    })
+  )
+}
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   ...authConfig,
@@ -12,42 +69,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   session: { strategy: "jwt" },
   secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET,
   trustHost: true,
-  providers: [
-    Google({
-      clientId: process.env.AUTH_GOOGLE_ID,
-      clientSecret: process.env.AUTH_GOOGLE_SECRET,
-    }),
-    Credentials({
-      name: "credentials",
-      credentials: {
-        email: { label: "Email", type: "email" },
-        password: { label: "Password", type: "password" },
-      },
-      async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) return null
-
-        const user = await prisma.user.findUnique({
-          where: { email: credentials.email as string },
-        })
-
-        if (!user || !user.password) return null
-
-        const isValid = await bcrypt.compare(
-          credentials.password as string,
-          user.password
-        )
-
-        if (!isValid) return null
-
-        return {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          role: user.role,
-        }
-      },
-    }),
-  ],
+  providers,
   callbacks: {
     ...authConfig.callbacks,
     async jwt({ token, user }) {
