@@ -3,46 +3,46 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
 model User {
-  id            String    @id @default(cuid())
-  name          String?
-  email         String    @unique
-  emailVerified DateTime?
-  password      String?
-  role          String      @default("CUSTOMER")
-  image         String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id             String    @id @default(cuid())
+  name           String?
+  email          String    @unique
+  emailVerified   DateTime?
+  password       String?
+  role           String    @default("CUSTOMER")
+  image          String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 
-  accounts      Account[]
-  sessions      Session[]
-  customer      Customer?
-  tickets       Ticket[]        @relation("TicketCreator")
+  accounts       Account[]
+  sessions       Session[]
+  customer       Customer?
+  tickets        Ticket[]         @relation("TicketCreator")
   ticketMessages TicketMessage[]
-  chatMessages  ChatMessage[]
-  notifications Notification[]
+  chatMessages   ChatMessage[]
+  notifications  Notification[]
 
   @@index([email])
   @@index([role])
 }
 
 model Account {
-  id                 String  @id @default(cuid())
-  userId             String
-  type               String
-  provider           String
-  providerAccountId  String
-  refresh_token      String?
-  access_token       String?
-  expires_at         Int?
-  token_type         String?
-  scope              String?
-  id_token           String?
-  session_state      String?
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -69,109 +69,117 @@ model VerificationToken {
 }
 
 model Customer {
-  id              String          @id @default(cuid())
-  userId          String          @unique
-  user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  firstName       String
-  lastName        String
-  phone           String
-  address         String
-  city            String
-  state           String?
-  zipCode         String?
-  country         String          @default("United States")
-  status          String  @default("ACTIVE")
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime        @updatedAt
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  firstName String
+  lastName  String
+  phone     String
+  address   String
+  city      String
+  state     String?
+  zipCode   String?
+  country   String   @default("United States")
+  status    String   @default("ACTIVE")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  subscriptions   Subscription[]
-  invoices        Invoice[]
-  riskScores      RiskScore[]
-  billingInfo     BillingInformation?
+  subscriptions Subscription[]
+  invoices      Invoice[]
+  riskScores    RiskScore[]
+  billingInfo   BillingInformation?
 
   @@index([status])
   @@index([userId])
 }
 
 model BillingInformation {
-  id                      String          @id @default(cuid())
-  customerId              String          @unique
-  customer                Customer        @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  
-  billingAddress          String
-  billingCity             String
-  billingState            String
-  billingZipCode          String
-  billingCountry          String          @default("United States")
-  
-  paymentMethod           String          // "card", "bank_transfer", "check"
-  cardHolderName          String?
-  cardLastFour            String?         // Last 4 digits of card
-  cardExpiry              String?         // MM/YY format
-  
-  bankAccountHolderName   String?
-  bankAccountLastFour     String?
-  bankRoutingNumber       String?
-  
-  taxId                   String?
-  businessName            String?
-  
-  isDefault               Boolean         @default(true)
-  createdAt               DateTime        @default(now())
-  updatedAt               DateTime        @updatedAt
-  
+  id                    String   @id @default(cuid())
+  customerId            String   @unique
+  customer              Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  billingAddress        String
+  billingCity           String
+  billingState          String
+  billingZipCode        String
+  billingCountry        String   @default("United States")
+  paymentMethod         String
+  cardHolderName        String?
+  cardLastFour          String?
+  cardExpiry            String?
+  bankAccountHolderName String?
+  bankAccountLastFour   String?
+  bankRoutingNumber     String?
+  taxId                 String?
+  businessName          String?
+  isDefault             Boolean  @default(true)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
   @@index([customerId])
 }
 
 model Bundle {
-  id              String          @id @default(cuid())
-  name            String          @unique
-  description     String
-  discount        Float           @default(0)  // percentage discount
-  totalPrice      Float
-  plans           String          // JSON array of plan IDs included in bundle
-  isActive        Boolean         @default(true)
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime        @updatedAt
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String
+  discount    Float    @default(0)
+  totalPrice  Float
+  plans       String
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  subscriptions   Subscription[]
+  subscriptions Subscription[]
 
   @@index([isActive])
 }
 
-model Plan {
-  id              String          @id @default(cuid())
-  name            String          @unique
-  description     String
-  price           Float
-  speed           String
-  features        String
-  isActive        Boolean         @default(true)
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime        @updatedAt
+model DataBundle {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  dataGb      Float
+  price       Float
+  offerPrice  Float?
+  description String
+  popular     Boolean  @default(false)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
 
-  subscriptions   Subscription[]
+model Plan {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String
+  price       Float
+  speed       String
+  features    String
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  subscriptions Subscription[]
 
   @@index([isActive])
 }
 
 model Subscription {
-  id                  String             @id @default(cuid())
-  customerId          String
-  customer            Customer           @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  planId              String
-  plan                Plan               @relation(fields: [planId], references: [id])
-  bundleId            String?
-  bundle              Bundle?            @relation(fields: [bundleId], references: [id])
-  status              String @default("PENDING")
-  startDate           DateTime
-  endDate             DateTime
-  autoRenew           Boolean            @default(true)
-  dataCapGb           Float              @default(0)
-  dataUsedGb          Float              @default(0)
-  unlockedFeatures    String             @default("[]")
-  createdAt           DateTime           @default(now())
-  updatedAt           DateTime           @updatedAt
+  id               String   @id @default(cuid())
+  customerId       String
+  customer         Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  planId           String
+  plan             Plan     @relation(fields: [planId], references: [id])
+  bundleId         String?
+  bundle           Bundle?  @relation(fields: [bundleId], references: [id])
+  status           String   @default("PENDING")
+  startDate        DateTime
+  endDate          DateTime
+  autoRenew        Boolean  @default(true)
+  dataCapGb        Float    @default(0)
+  dataUsedGb       Float    @default(0)
+  unlockedFeatures String   @default("[]")
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
   @@index([customerId])
   @@index([planId])
@@ -181,20 +189,20 @@ model Subscription {
 }
 
 model Invoice {
-  id              String        @id @default(cuid())
-  customerId      String
-  customer        Customer      @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  bundleId        String?       // Optional: track if this invoice is for a bundle subscription
-  amount          Float
-  tax             Float         @default(0)
-  total           Float
-  status          String @default("UNPAID")
-  dueDate         DateTime
-  description     String
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
+  id          String   @id @default(cuid())
+  customerId  String
+  customer    Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  bundleId    String?
+  amount      Float
+  tax         Float    @default(0)
+  total       Float
+  status      String   @default("UNPAID")
+  dueDate     DateTime
+  description String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  payments        Payment[]
+  payments Payment[]
 
   @@index([customerId])
   @@index([bundleId])
@@ -203,31 +211,31 @@ model Invoice {
 }
 
 model Payment {
-  id              String    @id @default(cuid())
-  invoiceId       String
-  invoice         Invoice   @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
-  amount          Float
-  method          String    @default("card")
-  transactionId   String?
-  paidAt          DateTime  @default(now())
-  createdAt       DateTime  @default(now())
+  id            String   @id @default(cuid())
+  invoiceId     String
+  invoice       Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  amount        Float
+  method        String   @default("card")
+  transactionId String?
+  paidAt        DateTime @default(now())
+  createdAt     DateTime @default(now())
 
   @@index([invoiceId])
 }
 
 model Ticket {
-  id              String        @id @default(cuid())
-  subject         String
-  description     String
-  status          String  @default("OPEN")
-  priority        String @default("MEDIUM")
-  creatorId       String
-  creator         User          @relation("TicketCreator", fields: [creatorId], references: [id], onDelete: Cascade)
-  assignedTo      String?
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
+  id          String   @id @default(cuid())
+  subject     String
+  description String
+  status      String   @default("OPEN")
+  priority    String   @default("MEDIUM")
+  creatorId   String
+  creator     User     @relation("TicketCreator", fields: [creatorId], references: [id], onDelete: Cascade)
+  assignedTo  String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  messages        TicketMessage[]
+  messages TicketMessage[]
 
   @@index([creatorId])
   @@index([status])
@@ -235,75 +243,63 @@ model Ticket {
 }
 
 model TicketMessage {
-  id              String    @id @default(cuid())
-  ticketId        String
-  ticket          Ticket    @relation(fields: [ticketId], references: [id], onDelete: Cascade)
-  senderId        String
-  sender          User      @relation(fields: [senderId], references: [id], onDelete: Cascade)
-  content         String
-  isAiGenerated   Boolean   @default(false)
-  createdAt       DateTime  @default(now())
+  id           String   @id @default(cuid())
+  ticketId     String
+  ticket       Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  senderId     String
+  sender       User     @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  content      String
+  isAiGenerated Boolean @default(false)
+  createdAt    DateTime @default(now())
 
   @@index([ticketId])
 }
 
 model ChatMessage {
-  id              String    @id @default(cuid())
-  userId          String
-  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  role            String    // "user" or "assistant"
-  content         String
-  createdAt       DateTime  @default(now())
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role      String
+  content   String
+  createdAt DateTime @default(now())
 
   @@index([userId])
 }
 
 model AIInsight {
-  id              String    @id @default(cuid())
-  type            String    // "revenue", "churn", "growth", "recommendation"
-  title           String
-  content         String
-  data            String?   // JSON string for chart data
-  createdAt       DateTime  @default(now())
+  id        String   @id @default(cuid())
+  type      String
+  title     String
+  content   String
+  data      String?
+  createdAt DateTime @default(now())
 
   @@index([type])
 }
 
 model RiskScore {
-  id              String    @id @default(cuid())
-  customerId      String
-  customer        Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  score           Int       // 0-100
-  level           String
-  factors         String
-  calculatedAt    DateTime  @default(now())
+  id           String   @id @default(cuid())
+  customerId   String
+  customer     Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  score        Int
+  level        String
+  factors      String
+  calculatedAt DateTime @default(now())
 
   @@index([customerId])
   @@index([level])
 }
 
 model Notification {
-  id          String   @id @default(cuid())
-  userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  title       String
-  message     String
-  type        String   @default("info") // "info", "warning", "success", "error"
-  isRead      Boolean  @default(false)
-  createdAt   DateTime @default(now())
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  message   String
+  type      String   @default("info")
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
 
   @@index([userId])
   @@index([isRead])
-}
-model DataBundle {
-  id          String   @id @default(cuid())
-  name        String   @unique
-  dataGb      Float
-  price       Float
-  offerPrice  Float?   // Optional offer price
-  description String
-  popular     Boolean  @default(false)
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
 }

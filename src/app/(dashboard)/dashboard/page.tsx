@@ -100,7 +100,7 @@ export default function DashboardPage() {
 
   const fetchData = async () => {
     if (status !== 'authenticated') return
-    
+
     setLoading(true)
     setError(null)
     try {
@@ -143,7 +143,7 @@ export default function DashboardPage() {
       </div>
       <h2 className="text-xl font-bold text-white mb-2">Oops! Something went wrong</h2>
       <p className="text-slate-400 max-w-md mb-6">{error}</p>
-      <button 
+      <button
         onClick={() => window.location.reload()}
         className="btn-primary"
       >
@@ -208,7 +208,7 @@ export default function DashboardPage() {
           <p className="text-sm text-slate-400 mt-1">Overview of your ISP operations</p>
         </div>
         <div className="flex items-center gap-2">
-          <button 
+          <button
             onClick={() => setShowOfferModal(true)}
             className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-400 hover:bg-blue-500/20 transition-all text-xs font-medium"
           >
@@ -356,8 +356,8 @@ export default function DashboardPage() {
           <div className="space-y-3">
             {aiInsights.map((insight, i) => (
               <div key={i} className={`p-3 rounded-xl border ${insight.type === 'positive' ? 'bg-emerald-500/5 border-emerald-500/10' :
-                  insight.type === 'warning' ? 'bg-amber-500/5 border-amber-500/10' :
-                    'bg-blue-500/5 border-blue-500/10'
+                insight.type === 'warning' ? 'bg-amber-500/5 border-amber-500/10' :
+                  'bg-blue-500/5 border-blue-500/10'
                 }`}>
                 <div className="flex items-center gap-2 mb-1">
                   {insight.type === 'positive' ? <TrendingUp className="w-3.5 h-3.5 text-emerald-400" /> :
@@ -378,10 +378,10 @@ export default function DashboardPage() {
             {recentActivity.map((activity, i) => (
               <div key={i} className="flex items-start gap-3">
                 <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${activity.type === 'customer' ? 'bg-blue-500/10 text-blue-400' :
-                    activity.type === 'payment' ? 'bg-emerald-500/10 text-emerald-400' :
-                      activity.type === 'ticket' ? 'bg-amber-500/10 text-amber-400' :
-                        activity.type === 'subscription' ? 'bg-purple-500/10 text-purple-400' :
-                          'bg-cyan-500/10 text-cyan-400'
+                  activity.type === 'payment' ? 'bg-emerald-500/10 text-emerald-400' :
+                    activity.type === 'ticket' ? 'bg-amber-500/10 text-amber-400' :
+                      activity.type === 'subscription' ? 'bg-purple-500/10 text-purple-400' :
+                        'bg-cyan-500/10 text-cyan-400'
                   }`}>
                   <activity.icon className="w-4 h-4" />
                 </div>
@@ -537,7 +537,7 @@ function CustomerDashboard({ data, onRefresh }: { data: any; onRefresh?: () => v
       setPaymentSuccess(true)
       setLiveDataUsed(result.dataUsedGb)
       setLiveDataCap(result.dataCapGb)
-      
+
       // Refresh parent data to ensure consistency across the whole dashboard
       if (onRefresh) onRefresh()
 
@@ -717,13 +717,12 @@ function CustomerDashboard({ data, onRefresh }: { data: any; onRefresh?: () => v
               return (
                 <div
                   key={bundle.id}
-                  className={`relative p-4 rounded-xl border transition-all ${
-                    justRecharged
+                  className={`relative p-4 rounded-xl border transition-all ${justRecharged
                       ? 'border-emerald-500/40 bg-emerald-500/5 ring-2 ring-emerald-500/30'
                       : bundle.popular
                         ? 'border-blue-500/30 bg-blue-500/5'
                         : 'border-white/10 bg-white/[0.02] hover:border-white/20'
-                  }`}
+                    }`}
                 >
                   {bundle.popular && (
                     <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 px-2.5 py-0.5 rounded-full bg-blue-500 text-[10px] font-bold text-white">
@@ -737,7 +736,7 @@ function CustomerDashboard({ data, onRefresh }: { data: any; onRefresh?: () => v
                   </div>
 
                   <p className="text-2xl font-bold text-white mb-0.5">{bundle.dataGb} <span className="text-sm font-normal text-slate-400">GB</span></p>
-                  
+
                   <div className="flex items-center gap-2 mb-4">
                     {bundle.offerPrice ? (
                       <>
@@ -752,13 +751,12 @@ function CustomerDashboard({ data, onRefresh }: { data: any; onRefresh?: () => v
                   <button
                     onClick={() => handleRecharge(bundle)}
                     disabled={paymentProcessing}
-                    className={`w-full py-2.5 rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-1.5 ${
-                      bundle.offerPrice 
+                    className={`w-full py-2.5 rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-1.5 ${bundle.offerPrice
                         ? 'bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white shadow-lg shadow-emerald-500/20 hover:scale-[1.02] active:scale-95'
                         : 'bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 hover:from-emerald-500/30 hover:to-cyan-500/30 text-white border border-emerald-500/20 hover:scale-[1.02] active:scale-95'
-                    }`}
+                      }`}
                   >
-                    <BatteryCharging className="w-3.5 h-3.5" /> Buy for ${ (bundle.offerPrice ?? bundle.price).toFixed(2) }
+                    <BatteryCharging className="w-3.5 h-3.5" /> Buy for ${(bundle.offerPrice ?? bundle.price).toFixed(2)}
                   </button>
                 </div>
               )
@@ -796,7 +794,7 @@ function CustomerDashboard({ data, onRefresh }: { data: any; onRefresh?: () => v
                   <h2 className="text-xl font-bold text-white flex items-center gap-2">
                     <CreditCard className="w-5 h-5 text-blue-400" /> Complete Purchase
                   </h2>
-                  <button 
+                  <button
                     type="button"
                     onClick={() => setShowPaymentModal(false)}
                     className="text-slate-500 hover:text-white transition-colors"
@@ -825,52 +823,52 @@ function CustomerDashboard({ data, onRefresh }: { data: any; onRefresh?: () => v
                 <div className="space-y-4">
                   <div>
                     <label className="block text-[10px] uppercase font-bold text-slate-500 mb-1.5 ml-1">Cardholder Name</label>
-                    <input 
+                    <input
                       type="text" required
-                      className="input-field bg-white/5 border-white/10" 
+                      className="input-field bg-white/5 border-white/10"
                       placeholder="JOHN DOE"
                       value={paymentFormData.name}
-                      onChange={e => setPaymentFormData({...paymentFormData, name: e.target.value})}
+                      onChange={e => setPaymentFormData({ ...paymentFormData, name: e.target.value })}
                     />
                   </div>
                   <div>
                     <label className="block text-[10px] uppercase font-bold text-slate-500 mb-1.5 ml-1">Card Number</label>
                     <div className="relative">
                       <CreditCard className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-                      <input 
+                      <input
                         type="text" required maxLength={19}
-                        className="input-field bg-white/5 border-white/10 pl-10" 
+                        className="input-field bg-white/5 border-white/10 pl-10"
                         placeholder="0000 0000 0000 0000"
                         value={paymentFormData.cardNumber}
-                        onChange={e => setPaymentFormData({...paymentFormData, cardNumber: e.target.value})}
+                        onChange={e => setPaymentFormData({ ...paymentFormData, cardNumber: e.target.value })}
                       />
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-[10px] uppercase font-bold text-slate-500 mb-1.5 ml-1">Expiry</label>
-                      <input 
+                      <input
                         type="text" required maxLength={5}
-                        className="input-field bg-white/5 border-white/10" 
+                        className="input-field bg-white/5 border-white/10"
                         placeholder="MM/YY"
                         value={paymentFormData.expiry}
-                        onChange={e => setPaymentFormData({...paymentFormData, expiry: e.target.value})}
+                        onChange={e => setPaymentFormData({ ...paymentFormData, expiry: e.target.value })}
                       />
                     </div>
                     <div>
                       <label className="block text-[10px] uppercase font-bold text-slate-500 mb-1.5 ml-1">CVC</label>
-                      <input 
+                      <input
                         type="password" required maxLength={4}
-                        className="input-field bg-white/5 border-white/10" 
+                        className="input-field bg-white/5 border-white/10"
                         placeholder="***"
                         value={paymentFormData.cvc}
-                        onChange={e => setPaymentFormData({...paymentFormData, cvc: e.target.value})}
+                        onChange={e => setPaymentFormData({ ...paymentFormData, cvc: e.target.value })}
                       />
                     </div>
                   </div>
                 </div>
 
-                <button 
+                <button
                   type="submit"
                   disabled={paymentProcessing}
                   className="w-full btn-primary py-3 flex items-center justify-center gap-2 mt-4"
@@ -1002,13 +1000,12 @@ function CustomerDashboard({ data, onRefresh }: { data: any; onRefresh?: () => v
                     <button
                       onClick={() => handlePurchase(item.id)}
                       disabled={!canAfford || isPurchasing || !!successItem || activeFeatures.includes(item.id)}
-                      className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 ${
-                        activeFeatures.includes(item.id)
+                      className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 ${activeFeatures.includes(item.id)
                           ? 'bg-emerald-500/20 text-emerald-300 cursor-default'
                           : canAfford
                             ? 'bg-white/10 hover:bg-white/20 text-white hover:scale-105 active:scale-95'
                             : 'bg-white/5 text-slate-600 cursor-not-allowed'
-                      }`}
+                        }`}
                     >
                       {isPurchasing ? (
                         <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Processing...</>
@@ -1025,7 +1022,7 @@ function CustomerDashboard({ data, onRefresh }: { data: any; onRefresh?: () => v
                   {!canAfford && !isPurchasing && !justBought && !activeFeatures.includes(item.id) && (
                     <div className="flex items-center justify-between mt-2">
                       <p className="text-[10px] text-red-400/70">You need {(item.dataCostGb - dataRemainingGb).toFixed(1)} GB more data</p>
-                      <button 
+                      <button
                         onClick={() => document.getElementById('recharge-section')?.scrollIntoView({ behavior: 'smooth' })}
                         className="text-[10px] text-blue-400 hover:underline flex items-center gap-1"
                       >
@@ -1046,7 +1043,7 @@ function CustomerDashboard({ data, onRefresh }: { data: any; onRefresh?: () => v
           {data.activeSubscription ? (
             <div className="p-4 rounded-xl bg-purple-500/10 border border-purple-500/20">
               <div className="flex items-center justify-between mb-4">
-                 <div>
+                <div>
                   <p className="text-sm font-semibold text-white">{data.activeSubscription.plan.name}</p>
                   <p className="text-xs text-slate-400">
                     {activeFeatures.includes('speed_boost') ? (
@@ -1068,7 +1065,7 @@ function CustomerDashboard({ data, onRefresh }: { data: any; onRefresh?: () => v
                   <span className="text-slate-500">Status</span>
                   <span className="text-emerald-400 font-medium">{data.activeSubscription.status}</span>
                 </div>
-                 <div className="flex justify-between text-xs">
+                <div className="flex justify-between text-xs">
                   <span className="text-slate-500">Next Renewal</span>
                   <span className="text-white">{new Date(data.activeSubscription.endDate).toLocaleDateString()}</span>
                 </div>
@@ -1099,8 +1096,8 @@ function CustomerDashboard({ data, onRefresh }: { data: any; onRefresh?: () => v
                   <p className="text-[10px] text-slate-500">{new Date(ticket.updatedAt).toLocaleDateString()}</p>
                 </div>
                 <span className={`text-[10px] px-2 py-0.5 rounded-full ${ticket.status === 'OPEN' ? 'bg-blue-500/20 text-blue-400' :
-                    ticket.status === 'CLOSED' ? 'bg-slate-500/20 text-slate-400' :
-                      'bg-amber-500/20 text-amber-400'
+                  ticket.status === 'CLOSED' ? 'bg-slate-500/20 text-slate-400' :
+                    'bg-amber-500/20 text-amber-400'
                   }`}>
                   {ticket.status}
                 </span>
@@ -1135,9 +1132,9 @@ function DataOfferModal({ onClose }: { onClose: () => void }) {
       const res = await fetch('/api/data-bundles/offers', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          bundleId, 
-          offerPrice: offerPrice === '' ? null : parseFloat(offerPrice) 
+        body: JSON.stringify({
+          bundleId,
+          offerPrice: offerPrice === '' ? null : parseFloat(offerPrice)
         }),
       })
       if (res.ok) {
@@ -1221,7 +1218,7 @@ function DataOfferModal({ onClose }: { onClose: () => void }) {
         </div>
 
         <div className="p-4 bg-blue-500/5 border-t border-white/5 flex justify-end">
-          <button 
+          <button
             onClick={onClose}
             className="px-6 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-sm font-bold transition-all shadow-lg shadow-blue-600/20"
           >

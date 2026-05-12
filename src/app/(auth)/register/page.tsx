@@ -164,9 +164,8 @@ export default function RegisterPage() {
                     {[1, 2, 3].map((level) => (
                       <div
                         key={level}
-                        className={`h-1 flex-1 rounded-full transition-colors ${
-                          level <= strength.level ? strength.color : 'bg-slate-700'
-                        }`}
+                        className={`h-1 flex-1 rounded-full transition-colors ${level <= strength.level ? strength.color : 'bg-slate-700'
+                          }`}
                       />
                     ))}
                   </div>

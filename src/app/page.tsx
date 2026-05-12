@@ -1,8 +1,8 @@
 'use client'
 
 import Link from 'next/link'
-import { 
-  Wifi, Shield, BarChart3, Brain, MessageSquare, 
+import {
+  Wifi, Shield, BarChart3, Brain, MessageSquare,
   Zap, Users, CreditCard, ArrowRight, Star,
   Globe, Cpu, ChevronRight
 } from 'lucide-react'
@@ -21,11 +21,11 @@ export default function LandingPage() {
     <div className="min-h-screen animated-gradient">
       {/* Navigation */}
       <nav className="fixed top-0 w-full z-50 transition-all duration-300"
-           style={{ 
-             background: scrollY > 50 ? 'rgba(10, 14, 26, 0.9)' : 'transparent',
-             backdropFilter: scrollY > 50 ? 'blur(12px)' : 'none',
-             borderBottom: scrollY > 50 ? '1px solid rgba(255,255,255,0.05)' : 'none'
-           }}>
+        style={{
+          background: scrollY > 50 ? 'rgba(10, 14, 26, 0.9)' : 'transparent',
+          backdropFilter: scrollY > 50 ? 'blur(12px)' : 'none',
+          borderBottom: scrollY > 50 ? '1px solid rgba(255,255,255,0.05)' : 'none'
+        }}>
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-9 h-9 rounded-lg gradient-bg flex items-center justify-center">
@@ -70,7 +70,7 @@ export default function LandingPage() {
           </h1>
 
           <p className="text-lg md:text-xl text-slate-400 max-w-2xl mx-auto mb-10 leading-relaxed">
-            Streamline your ISP operations with AI-driven customer management, 
+            Streamline your ISP operations with AI-driven customer management,
             automated billing, intelligent support, and predictive analytics — all in one platform.
           </p>
 
