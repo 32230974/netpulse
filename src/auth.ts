@@ -9,18 +9,20 @@ import bcrypt from "bcryptjs"
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   ...authConfig,
-  debug: process.env.NODE_ENV === 'development' || true,
+  debug: true,
   logger: {
     error(code, ...message) {
       console.error('AUTH_ERROR:', code, ...message)
-    },
-    warn(code, ...message) {
-      console.warn('AUTH_WARN:', code, ...message)
+      console.log('ENV_CHECK:', { 
+        hasSecret: !!process.env.AUTH_SECRET,
+        url: process.env.AUTH_URL || process.env.NEXTAUTH_URL,
+        nodeEnv: process.env.NODE_ENV
+      })
     },
   },
   adapter: PrismaAdapter(prisma),
   session: { strategy: "jwt" },
-  secret: process.env.AUTH_SECRET,
+  secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET,
   trustHost: true,
   providers: [
     Google({
