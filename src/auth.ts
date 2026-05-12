@@ -9,6 +9,15 @@ import bcrypt from "bcryptjs"
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   ...authConfig,
+  debug: process.env.NODE_ENV === 'development' || true,
+  logger: {
+    error(code, ...message) {
+      console.error('AUTH_ERROR:', code, ...message)
+    },
+    warn(code, ...message) {
+      console.warn('AUTH_WARN:', code, ...message)
+    },
+  },
   adapter: PrismaAdapter(prisma),
   session: { strategy: "jwt" },
   secret: process.env.AUTH_SECRET,
